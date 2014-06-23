@@ -1,0 +1,4 @@
+mqg
+===
+
+My query generator
