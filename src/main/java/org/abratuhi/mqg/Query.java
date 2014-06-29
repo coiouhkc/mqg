@@ -7,8 +7,8 @@ import java.util.Set;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.collections.Transformer;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.Transformer;
 import org.apache.commons.lang.StringUtils;
 
 public class Query implements IQueryTerm {
@@ -55,10 +55,10 @@ public class Query implements IQueryTerm {
     public String toSql() {
         StringBuffer sb = new StringBuffer();
         sb.append("(");
-        sb.append(StringUtils.join(CollectionUtils.collect(getTerms(), new Transformer() {
+        sb.append(StringUtils.join(CollectionUtils.collect(getTerms(), new Transformer<IQueryTerm, String>() {
             @Override
-            public Object transform(Object o) {
-                return ((IQueryTerm) o).toSql();
+            public String transform(IQueryTerm o) {
+                return o.toSql();
             }
         }), " " + getJunctor() + " "));
         sb.append(")");

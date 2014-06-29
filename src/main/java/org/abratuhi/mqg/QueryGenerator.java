@@ -9,8 +9,8 @@ import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.collections.Transformer;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.Transformer;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.javatuples.Pair;
@@ -143,10 +143,10 @@ public class QueryGenerator {
     public String toSql(Query query) throws SqlGeneratorException {
         List<Table> queryTables = new ArrayList<>(query.getUniqueTables());
         List<Path> joinPaths = computeJoinPaths(queryTables);
-        List<Query> joinQueries = new ArrayList<Query>(CollectionUtils.collect(joinPaths, new Transformer() {
+        List<Query> joinQueries = new ArrayList<Query>(CollectionUtils.collect(joinPaths, new Transformer<Path, Query>() {
             @Override
-            public Object transform(Object o) {
-                return QueryGenerator.this.path2join((Path) o);
+            public Query transform(Path o) {
+                return QueryGenerator.this.path2join(o);
             }
         }));
 
@@ -159,30 +159,28 @@ public class QueryGenerator {
         if (query.getProjectiles().isEmpty()) {
             sb.append("* ");
         } else {
-            String selectSql = StringUtils.join(CollectionUtils.collect(query.getProjectiles(), new Transformer() {
+            String selectSql = StringUtils.join(CollectionUtils.collect(query.getProjectiles(), new Transformer<Column,String>() {
                 @Override
-                public Object transform(Object o) {
-                    Column projectile = (Column) o;
+                public String transform(Column projectile) {
                     return projectile.getTable().getAlias() + "." + projectile.getName();
                 }
             }), ", ");
             sb.append(selectSql);
         }
         queryTables = new ArrayList<>(queryWithJoins.getUniqueTables());
-        String fromSql = StringUtils.join(CollectionUtils.collect(queryTables, new Transformer() {
+        String fromSql = StringUtils.join(CollectionUtils.collect(queryTables, new Transformer<Table,String>() {
             @Override
-            public Object transform(Object o) {
-                Table table = (Table) o;
+            public String transform(Table table) {
                 return table.getFqdn() + " " + table.getAlias();
             }
         }), ", ");
         sb.append(" FROM ");
         sb.append(fromSql);
         sb.append(" WHERE ");
-        sb.append(StringUtils.join(CollectionUtils.collect(queryWithJoins.getTerms(), new Transformer() {
+        sb.append(StringUtils.join(CollectionUtils.collect(queryWithJoins.getTerms(), new Transformer<IQueryTerm, String>() {
             @Override
-            public String transform(Object o) {
-                return ((IQueryTerm) o).toSql();
+            public String transform(IQueryTerm o) {
+                return o.toSql();
             }
         }), " " + queryWithJoins.getJunctor() + " "));
         return sb.toString();
